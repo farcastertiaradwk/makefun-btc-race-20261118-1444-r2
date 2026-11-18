@@ -23,11 +23,16 @@
 //   flip is in (+0.30%, +1.50%]: a flip while the day is still below its
 //   open is a recovery inside a down day, and a flip after a >1.50% spike
 //   is a chase — both lost in offline testing. It then buys full size on
-//   the first eligible bar while armed (arming survives a cooldown). Max 1
-//   long round trip. Exits: regime flips to CASH, 1.00% trailing stop under
-//   the peak, -1.20% hard stop, 720-bar time stop if under entry +0.30%.
+//   the first eligible bar while armed (arming survives a cooldown). Max 2
+//   long round trips: a second genuine flip to LONG re-arms a second trip
+//   (the old cap of 1 discarded a real signal — on the mirrored
+//   spike-then-fade day the second trip turns -9.49 into +0.14, with no
+//   change on dev or the other synthetic days; a cap of 3 is identical, so
+//   2 is not a tuned spike). Exits: regime flips to CASH, 1.00% trailing
+//   stop under the peak, -1.20% hard stop, 720-bar time stop if under entry
+//   +0.30%.
 //
-//   Shared: full-size buys (100% of equity), max 3 dip + 1 long trips,
+//   Shared: full-size buys (100% of equity), max 3 dip + 2 long trips,
 //   60-bar cooldown after every exit, no new entries in the final 180 bars.
 //
 // All comparisons are integer basis-point math on raw closes; the 120-bar
@@ -42,7 +47,9 @@
 //   UP +2.5% drift:     +43.16 USDC (+4.32%), maxDD 154bps, 1 dip + 1 long
 //   DOWN -2.5% drift:   +8.44 USDC (+0.84%), maxDD 203bps, 1 dip + 1 long
 //   FLAT drift:          +26.72 USDC (+2.67%), maxDD 170bps, 1 dip + 1 long
-//   MIRRORED (spike-then-fade): -9.49 USDC (-0.95%), maxDD 147bps, worst case
+//   MIRRORED (spike-then-fade): +0.14 USDC (+0.01%), maxDD 172bps, 2 dip + 2 long
+//   (was -9.49 with the 1-long cap; the second long trip, bought on a second
+//   genuine flip to LONG at bar 1189, is flattened at the window close)
 // Honest note: on the dev window alone this is below round 1's +1.68%
 // (round 1's third dev trade does not reproduce from its prose spec — its
 // exact confirm differs — and the rising-two-closes rule that costs that
@@ -59,7 +66,7 @@ const TOTAL_BARS = 1440;
 const CUTOFF_BARS = 180; // no new entries in the final 180 bars
 const COOLDOWN_BARS = 60;
 const MAX_DIP_TRIPS = 3;
-const MAX_LONG_TRIPS = 1;
+const MAX_LONG_TRIPS = 2;
 const MAX_SLIPPAGE_BPS = 200;
 const SCALE6 = 1_000_000n;
 
